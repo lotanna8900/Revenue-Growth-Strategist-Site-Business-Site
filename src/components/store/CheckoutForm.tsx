@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect } from 'react';
 import { useFormStatus } from 'react-dom';
-import { createCheckoutSession } from '@/app/store/actions';
+import { createCheckoutSession } from '@/app/(public)/store/actions';
 import { AlertCircle, Loader2 } from 'lucide-react';
 
 type CheckoutResponse = {

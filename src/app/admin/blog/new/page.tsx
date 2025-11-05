@@ -1,25 +1,26 @@
 'use client';
 
-import { useState } from 'react'; 
-import { useFormStatus, useFormState } from 'react-dom'; 
+import { useState, useActionState } from 'react';
+import { useFormStatus } from 'react-dom'; 
 import { createPost } from '../actions';
 
 type FormState = { error: string } | null;
 import Editor from '@/components/admin/Editor';
 import { AlertCircle, Loader2 } from 'lucide-react';
+import FileManagerModal from '@/components/admin/FileManagerModal';
 
-// Slugify function
+// slugify function
 function slugify(text: string): string {
   return text
     .toString()
     .toLowerCase()
     .trim()
-    .replace(/\s+/g, '-') // Replace spaces with -
-    .replace(/[^\w-]+/g, '') // Remove all non-word chars
-    .replace(/--+/g, '-'); // Replace multiple - with single -
+    .replace(/\s+/g, '-') 
+    .replace(/[^\w-]+/g, '') 
+    .replace(/--+/g, '-'); 
 }
 
-// Form submit button
+// SubmitButton function
 function SubmitButton() {
   const { pending } = useFormStatus();
   return (
@@ -42,23 +43,15 @@ function SubmitButton() {
 
 // Main page component
 export default function NewPostPage() {
-  // Server action state
-  const [state, formAction] = useFormState<FormState, FormData>(
-    async (prevState, formData) => {
-      try {
-        await createPost(formData);
-        return null;
-      } catch (error) {
-        return { error: error instanceof Error ? error.message : 'An error occurred' };
-      }
-    },
-    null
-  );
+  const [state, formAction] = useActionState(createPost, null);
   
   // Client state for editor
   const [content, setContent] = useState('');
   const [title, setTitle] = useState('');
   const [slug, setSlug] = useState('');
+  const [featured, setFeatured] = useState(false);
+  const [featuredImage, setFeaturedImage] = useState('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newTitle = e.target.value;
@@ -73,6 +66,7 @@ export default function NewPostPage() {
       </h1>
 
       <form action={formAction} className="max-w-4xl space-y-6">
+        {/* This error display is now correct */}
         {state && state.error && (
             <div className="flex items-center gap-2 rounded-lg bg-red-100 p-3 text-sm text-red-700">
                 <AlertCircle className="w-5 h-5" />
@@ -117,6 +111,34 @@ export default function NewPostPage() {
           </p>
         </div>
 
+        {/* IMAGE CARD */}
+        <div className="glass-card p-6">
+          <label htmlFor="featured_image" className="block text-lg font-semibold text-brand-800 mb-2">
+            Featured Image
+          </label>
+          <div className="flex gap-2">
+            <input
+              id="featured_image"
+              name="featured_image"
+              type="text"
+              value={featuredImage}
+              onChange={(e) => setFeaturedImage(e.target.value)}
+              className="w-full px-4 py-3 rounded-lg border border-brand-200 focus:outline-none focus:ring-2 focus:ring-brand-600"
+              placeholder="Click 'Browse' or paste a URL..."
+            />
+            <button
+              type="button"
+              onClick={() => setIsModalOpen(true)}
+              className="btn-secondary flex-shrink-0"
+            >
+              Browse
+            </button>
+          </div>
+          {featuredImage && (
+            <img src={featuredImage} alt="Preview" className="mt-4 rounded-lg object-cover w-full h-48" />
+          )}
+        </div>
+
         {/* Content Editor */}
         <div className="glass-card p-6">
           <label className="block text-lg font-semibold text-brand-800 mb-2">
@@ -132,24 +154,52 @@ export default function NewPostPage() {
 
         {/* Publish Actions */}
         <div className="glass-card p-6 flex justify-between items-center">
-          <div>
-            <label htmlFor="status" className="block text-lg font-semibold text-brand-800 mb-2">
-              Status
-            </label>
-            <select
-              id="status"
-              name="status"
-              defaultValue="draft"
-              className="px-4 py-3 rounded-lg border border-brand-200 bg-white focus:outline-none focus:ring-2 focus:ring-brand-600"
-            >
-              <option value="draft">Draft</option>
-              <option value="published">Published</option>
-            </select>
+          <div className="flex flex-wrap gap-8">
+            {/* Status */}
+            <div>
+              <label htmlFor="status" className="block text-lg font-semibold text-brand-800 mb-2">
+                Status
+              </label>
+              <select
+                id="status"
+                name="status"
+                defaultValue="draft"
+                className="px-4 py-3 rounded-lg border border-brand-200 bg-white focus:outline-none focus:ring-2 focus:ring-brand-600"
+              >
+                <option value="draft">Draft</option>
+                <option value="published">Published</option>
+              </select>
+            </div>
+            
+            {/* Featured Checkbox */}
+            <div className="flex items-center pt-8">
+              <input
+                id="featured"
+                name="featured"
+                type="checkbox"
+                checked={featured}
+                onChange={(e) => setFeatured(e.target.checked)}
+                className="h-5 w-5 rounded border-brand-300 text-brand-600 focus:ring-brand-600"
+              />
+              <label htmlFor="featured" className="ml-2 block text-md font-semibold text-brand-800">
+                Feature on homepage?
+              </label>
+            </div>
           </div>
           
           <SubmitButton />
         </div>
       </form>
+
+      {/* Filemanager Modal */}
+      <FileManagerModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onFileSelect={(url) => {
+          setFeaturedImage(url);
+          setIsModalOpen(false);
+        }}
+      />
     </div>
   );
 }

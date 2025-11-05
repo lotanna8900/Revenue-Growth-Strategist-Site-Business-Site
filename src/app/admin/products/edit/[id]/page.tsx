@@ -5,6 +5,7 @@ import { useFormStatus } from 'react-dom';
 import { updateProduct } from '@/app/admin/products/actions';
 import { createClient } from '@/lib/supabase/client';
 import { AlertCircle, Loader2 } from 'lucide-react';
+import FileManagerModal from '@/components/admin/FileManagerModal';
 
 // Simple type for the product data
 type Product = {
@@ -21,6 +22,7 @@ type Product = {
   sizes: string[];
   colors: string[];
   images: string[];
+  featured: boolean; // 1. ADDED
 };
 
 type FormState = { error: string } | null;
@@ -80,6 +82,10 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
   const [sizes, setSizes] = useState('');
   const [colors, setColors] = useState('');
   const [images, setImages] = useState('');
+  const [featured, setFeatured] = useState(false); // 4. ADDED
+
+  // State for file manager modal
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Fetch the product data on component mount
   useEffect(() => {
@@ -89,7 +95,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
     const fetchProduct = async () => {
       const { data, error } = await supabase
         .from('products')
-        .select('*')
+        .select('*') // '*' will now include 'featured'
         .eq('id', id)
         .single();
       
@@ -104,10 +110,10 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
         setSku(data.sku || '');
         setCategory(data.category || '');
         setStatus(data.status);
-        // Convert arrays back to comma-separated strings for the form
         setSizes(data.sizes?.join(', ') || '');
         setColors(data.colors?.join(', ') || '');
         setImages(data.images?.join(', ') || '');
+        setFeatured(data.featured || false); // 5. ADDED
       } else {
         console.error('Error fetching product:', error);
       }
@@ -121,6 +127,12 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
     const newName = e.target.value;
     setName(newName);
     setSlug(slugify(newName));
+  };
+
+  // handleFileSelect function
+  const handleFileSelect = (url: string) => {
+    // Appends the new URL, adding a comma if needed
+    setImages((prev) => (prev ? `${prev}, ${url}` : url));
   };
   
   if (isLoading) {
@@ -267,7 +279,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
           </div>
         </div>
 
-        {/* Organization Card */}
+        {/* Organization Card (UPDATED) */}
         <div className="glass-card p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Category */}
@@ -302,6 +314,21 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
                 <option value="out_of_stock">Out of Stock</option>
               </select>
             </div>
+          </div>
+
+          {/* 6. FEATURED CHECKBOX */}
+          <div className="flex items-center pt-6 mt-6 border-t border-brand-200">
+            <input
+              id="featured"
+              name="featured"
+              type="checkbox"
+              checked={featured}
+              onChange={(e) => setFeatured(e.target.checked)}
+              className="h-5 w-5 rounded border-brand-300 text-brand-600 focus:ring-brand-600"
+            />
+            <label htmlFor="featured" className="ml-2 block text-md font-semibold text-brand-800">
+              Feature on homepage?
+            </label>
           </div>
         </div>
         
@@ -347,18 +374,28 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
             {/* Images */}
             <div>
               <label htmlFor="images" className="block text-md font-semibold text-brand-800 mb-2">
-                Image URLs (Temporary)
+                Image URLs
               </label>
-              <input
-                id="images"
-                name="images"
-                type="text"
-                value={images}
-                onChange={(e) => setImages(e.target.value)}
-                className="w-full px-4 py-3 rounded-lg border border-brand-200 focus:outline-none focus:ring-2 focus:ring-brand-600"
-              />
+              <div className="flex gap-2">
+                <input
+                  id="images"
+                  name="images"
+                  type="text"
+                  value={images}
+                  onChange={(e) => setImages(e.target.value)}
+                  className="w-full px-4 py-3 rounded-lg border border-brand-200 focus:outline-none focus:ring-2 focus:ring-brand-600"
+                  placeholder="Click 'Browse' or paste URLs..."
+                />
+                <button
+                  type="button"
+                  onClick={() => setIsModalOpen(true)}
+                  className="btn-secondary flex-shrink-0"
+                >
+                  Browse
+                </button>
+              </div>
               <p className="text-sm text-brand-500 mt-2">
-                Enter URLs separated by a comma. We will replace this with the File Manager.
+                Add URLs separated by a comma.
               </p>
             </div>
           </div>
@@ -369,6 +406,13 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
           <SubmitButton />
         </div>
       </form>
+
+      {/* 5. MODAL COMPONENT */}
+      <FileManagerModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onFileSelect={handleFileSelect}
+      />
     </div>
   );
 }

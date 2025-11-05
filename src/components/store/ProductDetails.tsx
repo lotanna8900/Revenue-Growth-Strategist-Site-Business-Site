@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, CheckCircle, ShoppingCart, Loader2 } from 'lucide-react';
-import { createCheckoutSession } from '@/app/store/actions';
+import { createCheckoutSession } from '@/app/(public)/store/actions';
 
 // Function to format price in NGN
 function formatPrice(price: number | null) {

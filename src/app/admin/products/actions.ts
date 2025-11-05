@@ -22,16 +22,14 @@ function getProductData(formData: FormData) {
     description: formData.get('description') as string,
     category: formData.get('category') as string,
     status: formData.get('status') as string,
-    // Store price in decimal for the DB
     price: price,
     sale_price: salePrice,
     stock: stock,
     sku: formData.get('sku') as string,
-    // Convert comma-separated strings to text arrays
     sizes: stringToArray(formData.get('sizes') as string),
     colors: stringToArray(formData.get('colors') as string),
-    // I'll handle image uploads separately, but this is a placeholder
     images: stringToArray(formData.get('images') as string),
+    featured: formData.get('featured') === 'on', // 1. ADDED THIS
   };
 }
 
@@ -57,7 +55,8 @@ export async function createProduct(previousState: any, formData: FormData) {
   }
 
   revalidatePath('/admin/products');
-  revalidatePath('/store'); // Public store page
+  revalidatePath('/store');
+  revalidatePath('/'); // Revalidate homepage
   redirect('/admin/products');
 }
 
@@ -74,7 +73,7 @@ export async function updateProduct(previousState: any, formData: FormData) {
   const { error } = await supabase
     .from('products')
     .update({
-      ...productData,
+      ...productData, // This now includes the 'featured' field
       updated_at: new Date().toISOString(),
     })
     .eq('id', id);
@@ -86,7 +85,8 @@ export async function updateProduct(previousState: any, formData: FormData) {
 
   revalidatePath('/admin/products');
   revalidatePath(`/admin/products/edit/${id}`);
-  revalidatePath(`/store/${productData.slug}`); // Public product page
+  revalidatePath(`/store/${productData.slug}`);
+  revalidatePath('/'); 
   redirect('/admin/products');
 }
 
@@ -95,7 +95,7 @@ export async function deleteProduct(formData: FormData) {
   const id = formData.get('id') as string;
 
   if (!id) {
-    throw new Error('Product ID is missing.'); 
+    throw new Error('Product ID is missing.');
   }
 
   const { error } = await supabase
@@ -110,5 +110,6 @@ export async function deleteProduct(formData: FormData) {
 
   revalidatePath('/admin/products');
   revalidatePath('/store');
+  revalidatePath('/'); 
   redirect('/admin/products');
 }

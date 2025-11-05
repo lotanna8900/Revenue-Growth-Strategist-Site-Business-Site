@@ -1,25 +1,38 @@
 'use client';
 
-import { useState, useActionState } from 'react';
-import { useFormState, useFormStatus } from 'react-dom';
-import { createProject } from '../actions';
+import { useState, useEffect, use, useActionState } from 'react';
+import { useFormStatus } from 'react-dom';
+import { updateAchievement } from '@/app/admin/achievements/actions'; 
+import { createClient } from '@/lib/supabase/client';
 import { AlertCircle, Loader2 } from 'lucide-react';
 
-// Define the state type for the form
+// Define a simple type for the achievement data
+type Achievement = { 
+  id: string;
+  title: string;
+  slug: string;
+  description: string | null;
+  client_name: string | null;
+  industry: string | null;
+  year: number | null;
+  status: string;
+  featured: boolean;
+};
+
 type FormState = { error: string } | null;
 
-// Slugify function
+// Re-usable slugify function
 function slugify(text: string): string {
   return text
     .toString()
     .toLowerCase()
     .trim()
-    .replace(/\s+/g, '-') 
-    .replace(/[^\w-]+/g, '') 
-    .replace(/--+/g, '-'); 
+    .replace(/\s+/g, '-')
+    .replace(/[^\w-]+/g, '')
+    .replace(/--+/g, '-');
 }
 
-// Form submit button
+// Re-usable submit button
 function SubmitButton() {
   const { pending } = useFormStatus();
   return (
@@ -31,42 +44,102 @@ function SubmitButton() {
       {pending ? (
         <>
           <Loader2 className="w-5 h-5 animate-spin" />
-          Saving...
+          Updating...
         </>
       ) : (
-        'Create Project'
+        'Update Achievement' 
       )}
     </button>
   );
 }
 
 // Main page component
-export default function NewProjectPage() {
-  // FIX 2: Use 'useActionState' and pass the action directly
-  const [state, formAction] = useActionState(createProject, null);
+export default function EditAchievementPage({ params }: { params: Promise<{ id: string }> }) { 
+  // 2. Unwrap the 'params' promise
+  const clientParams = use(params);
+  const { id } = clientParams;
   
-  // Client state for controlled inputs
+  // 3. Use 'useActionState' for form handling
+  const [state, formAction] = useActionState(updateAchievement, null); 
+  
+  // Local state for the form fields
+  const [achievementData, setAchievementData] = useState<Achievement | null>(null); 
+  const [isLoading, setIsLoading] = useState(true);
+  
+  // Client-side state for controlled inputs
   const [title, setTitle] = useState('');
   const [slug, setSlug] = useState('');
+  const [clientName, setClientName] = useState('');
+  const [industry, setIndustry] = useState('');
+  const [year, setYear] = useState('');
+  const [description, setDescription] = useState('');
+  const [status, setStatus] = useState('completed');
+  const [featured, setFeatured] = useState(false);
+
+  // Fetch the achievement data on component mount
+  useEffect(() => {
+    if (!id) return; 
+
+    const supabase = createClient();
+    const fetchAchievement = async () => { 
+      const { data, error } = await supabase
+        .from('achievements') // Renamed table
+        .select('*')
+        .eq('id', id)
+        .single();
+      
+      if (data) {
+        setAchievementData(data as Achievement); 
+        // Set the controlled component state
+        setTitle(data.title);
+        setSlug(data.slug);
+        setClientName(data.client_name || '');
+        setIndustry(data.industry || '');
+        setYear(data.year?.toString() || '');
+        setDescription(data.description || '');
+        setStatus(data.status);
+        setFeatured(data.featured);
+      } else {
+        console.error('Error fetching achievement:', error); 
+      }
+      setIsLoading(false);
+    };
+
+    fetchAchievement(); 
+  }, [id]);
 
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newTitle = e.target.value;
     setTitle(newTitle);
     setSlug(slugify(newTitle));
   };
+  
+  if (isLoading) {
+    return (
+      <div className="p-8 flex items-center justify-center h-full">
+        <Loader2 className="w-12 h-12 animate-spin text-brand-600" />
+      </div>
+    );
+  }
+
+  if (!achievementData) {
+     return <div className="p-8">Achievement not found.</div>; 
+  }
 
   return (
     <div className="p-8">
       <h1 className="text-4xl font-bold text-brand-900 mb-8">
-        Create New Project
+        Edit Achievement
       </h1>
 
       <form action={formAction} className="max-w-4xl space-y-6">
-        {state?.error && (
-          <div className="flex items-center gap-2 rounded-lg bg-red-100 p-3 text-sm text-red-700">
-            <AlertCircle className="w-5 h-5" />
-            <span>{state.error}</span>
-          </div>
+        <input type="hidden" name="id" value={id} />
+
+        {state && state.error && (
+            <div className="flex items-center gap-2 rounded-lg bg-red-100 p-3 text-sm text-red-700">
+                <AlertCircle className="w-5 h-5" />
+                <span>{state.error}</span>
+            </div>
         )}
 
         {/* Main Details Card */}
@@ -75,7 +148,7 @@ export default function NewProjectPage() {
             {/* Title */}
             <div>
               <label htmlFor="title" className="block text-lg font-semibold text-brand-800 mb-2">
-                Project Title
+                Achievement Title
               </label>
               <input
                 id="title"
@@ -85,7 +158,6 @@ export default function NewProjectPage() {
                 value={title}
                 onChange={handleTitleChange}
                 className="w-full px-4 py-3 rounded-lg border border-brand-200 text-lg focus:outline-none focus:ring-2 focus:ring-brand-600"
-                placeholder="e.g., Client Website Redesign"
               />
             </div>
 
@@ -102,40 +174,42 @@ export default function NewProjectPage() {
                 value={slug}
                 onChange={(e) => setSlug(e.target.value)}
                 className="w-full px-4 py-3 rounded-lg border border-brand-200 bg-brand-50 text-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-600"
-                placeholder="e.g., client-website-redesign"
               />
             </div>
           </div>
         </div>
         
-        {/* Project Info Card */}
+        {/* Context Card */}
         <div className="glass-card p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Client Name */}
+            {/* Client Name / Context */}
             <div>
               <label htmlFor="client_name" className="block text-md font-semibold text-brand-800 mb-2">
-                Client Name
+                Client / Organization (Optional)
               </label>
               <input
                 id="client_name"
                 name="client_name"
                 type="text"
+                value={clientName}
+                onChange={(e) => setClientName(e.target.value)}
                 className="w-full px-4 py-3 rounded-lg border border-brand-200 focus:outline-none focus:ring-2 focus:ring-brand-600"
-                placeholder="e.g., ABC Corp"
               />
             </div>
             
-            {/* Industry */}
+            {/* Industry / Category */}
             <div>
               <label htmlFor="industry" className="block text-md font-semibold text-brand-800 mb-2">
-                Industry
+                Category
               </label>
               <input
                 id="industry"
                 name="industry"
                 type="text"
+                value={industry}
+                onChange={(e) => setIndustry(e.target.value)}
                 className="w-full px-4 py-3 rounded-lg border border-brand-200 focus:outline-none focus:ring-2 focus:ring-brand-600"
-                placeholder="e.g., E-commerce"
+                placeholder="e.g., Case Study, Course, Speaking"
               />
             </div>
             
@@ -148,8 +222,9 @@ export default function NewProjectPage() {
                 id="year"
                 name="year"
                 type="number"
+                value={year}
+                onChange={(e) => setYear(e.target.value)}
                 className="w-full px-4 py-3 rounded-lg border border-brand-200 focus:outline-none focus:ring-2 focus:ring-brand-600"
-                placeholder="e.g., 2025"
               />
             </div>
           </div>
@@ -158,14 +233,16 @@ export default function NewProjectPage() {
         {/* Description Card */}
         <div className="glass-card p-6">
           <label htmlFor="description" className="block text-lg font-semibold text-brand-800 mb-2">
-            Description & Results
+            Description & Key Takeaways
           </label>
           <textarea
             id="description"
             name="description"
             rows={8}
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
             className="w-full px-4 py-3 rounded-lg border border-brand-200 focus:outline-none focus:ring-2 focus:ring-brand-600"
-            placeholder="Describe the project, the challenge, and the results..."
+            placeholder="Describe the achievement, the challenge, and the results or key lessons..."
           ></textarea>
         </div>
 
@@ -180,7 +257,8 @@ export default function NewProjectPage() {
               <select
                 id="status"
                 name="status"
-                defaultValue="completed"
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
                 className="px-4 py-3 rounded-lg border border-brand-200 bg-white focus:outline-none focus:ring-2 focus:ring-brand-600"
               >
                 <option value="completed">Completed</option>
@@ -194,6 +272,8 @@ export default function NewProjectPage() {
                 id="featured"
                 name="featured"
                 type="checkbox"
+                checked={featured}
+                onChange={(e) => setFeatured(e.target.checked)}
                 className="h-5 w-5 rounded border-brand-300 text-brand-600 focus:ring-brand-600"
               />
               <label htmlFor="featured" className="ml-2 block text-md font-semibold text-brand-800">

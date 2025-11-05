@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useRef } from 'react';
 import { useFormStatus } from 'react-dom';
-import { submitComment } from '@/app/blog/actions';
+import { submitComment } from '@/app/(public)/blog/actions';
 import { AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
 
 type FormState = { message: string; isError: boolean } | null;

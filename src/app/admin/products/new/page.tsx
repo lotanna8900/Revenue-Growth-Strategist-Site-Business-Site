@@ -4,6 +4,7 @@ import { useState, useActionState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { createProduct } from '../actions';
 import { AlertCircle, Loader2 } from 'lucide-react';
+import FileManagerModal from '@/components/admin/FileManagerModal';
 
 type FormState = { error: string } | null;
 
@@ -41,17 +42,28 @@ function SubmitButton() {
 
 // Main page component
 export default function NewProductPage() {
-  // Server action state
   const [state, formAction] = useActionState(createProduct, null);
   
   // Client state for controlled inputs
   const [name, setName] = useState('');
   const [slug, setSlug] = useState('');
+  const [featured, setFeatured] = useState(false);
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [images, setImages] = useState('');
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newName = e.target.value;
     setName(newName);
     setSlug(slugify(newName));
+  };
+
+  const handleFileSelect = (url: string) => {
+    const newImages = images
+      ? `${images}, ${url}`
+      : url;
+    setImages(newImages);
+    setIsModalOpen(false);
   };
 
   return (
@@ -185,7 +197,7 @@ export default function NewProductPage() {
           </div>
         </div>
 
-        {/* Organization Card */}
+        {/* Organization Card (UPDATED) */}
         <div className="glass-card p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Category */}
@@ -218,6 +230,21 @@ export default function NewProductPage() {
                 <option value="out_of_stock">Out of Stock</option>
               </select>
             </div>
+          </div>
+          
+          {/* 2. FEATURED CHECKBOX */}
+          <div className="flex items-center pt-6 mt-6 border-t border-brand-200">
+            <input
+              id="featured"
+              name="featured"
+              type="checkbox"
+              checked={featured}
+              onChange={(e) => setFeatured(e.target.checked)}
+              className="h-5 w-5 rounded border-brand-300 text-brand-600 focus:ring-brand-600"
+            />
+            <label htmlFor="featured" className="ml-2 block text-md font-semibold text-brand-800">
+              Feature on homepage?
+            </label>
           </div>
         </div>
         
@@ -261,17 +288,28 @@ export default function NewProductPage() {
             {/* Images */}
             <div>
               <label htmlFor="images" className="block text-md font-semibold text-brand-800 mb-2">
-                Image URLs (Temporary)
+                Image URLs
               </label>
-              <input
-                id="images"
-                name="images"
-                type="text"
-                className="w-full px-4 py-3 rounded-lg border border-brand-200 focus:outline-none focus:ring-2 focus:ring-brand-600"
-                placeholder="e.g., url1.jpg, url2.jpg"
-              />
+              <div className="flex gap-2">
+                <input
+                  id="images"
+                  name="images"
+                  type="text"
+                  value={images}
+                  onChange={(e) => setImages(e.target.value)}
+                  className="w-full px-4 py-3 rounded-lg border border-brand-200 focus:outline-none focus:ring-2 focus:ring-brand-600"
+                  placeholder="Click 'Browse' or paste URLs..."
+                />
+                <button
+                  type="button"
+                  onClick={() => setIsModalOpen(true)}
+                  className="btn-secondary flex-shrink-0"
+                >
+                  Browse
+                </button>
+              </div>
               <p className="text-sm text-brand-500 mt-2">
-                Enter URLs separated by a comma. We will replace this with the File Manager.
+                Add URLs separated by a comma.
               </p>
             </div>
           </div>
@@ -282,6 +320,13 @@ export default function NewProductPage() {
           <SubmitButton />
         </div>
       </form>
+
+      {/* File manager modal */}
+      <FileManagerModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onFileSelect={handleFileSelect}
+      />
     </div>
   );
 }

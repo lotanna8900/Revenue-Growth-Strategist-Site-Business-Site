@@ -2,11 +2,10 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { logout } from '@/app/login/actions';
+import { logoutUser } from '@/app/(public)/auth/actions'; // Ensure this path is correct
 import {
   LayoutDashboard,
   FileText,
-  Briefcase,
   ShoppingBag,
   FolderOpen,
   BarChart3,
@@ -14,16 +13,20 @@ import {
   Settings,
   LogOut,
   Sparkles,
+  Trophy,
+  Users,
+  ExternalLink, 
 } from 'lucide-react';
 
 const menuItems = [
   { icon: LayoutDashboard, label: 'Dashboard', href: '/admin' },
   { icon: FileText, label: 'Blog Manager', href: '/admin/blog' },
-  { icon: Briefcase, label: 'Projects', href: '/admin/projects' },
+  { icon: Trophy, label: 'Achievements', href: '/admin/achievements' },
   { icon: ShoppingBag, label: 'Products', href: '/admin/products' },
   { icon: FolderOpen, label: 'File Manager', href: '/admin/files' },
   { icon: BarChart3, label: 'Analytics', href: '/admin/analytics' },
   { icon: MessageSquare, label: 'Comments', href: '/admin/comments' },
+  { icon: Users, label: 'Subscribers', href: '/admin/subscribers' },
   { icon: Settings, label: 'Settings', href: '/admin/settings' },
 ];
 
@@ -34,7 +37,7 @@ export default function Sidebar() {
     <aside className="w-64 min-h-screen bg-gradient-to-b from-brand-800 to-brand-900 text-white flex flex-col">
       {/* Logo */}
       <div className="p-6 border-b border-brand-700">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 mb-4">
           <div className="w-10 h-10 bg-gradient-to-br from-accent-gold to-accent-rose rounded-lg flex items-center justify-center">
             <Sparkles className="w-6 h-6" />
           </div>
@@ -43,6 +46,16 @@ export default function Sidebar() {
             <p className="text-xs text-brand-300">Dashboard</p>
           </div>
         </div>
+        
+        {/* 2. "VIEW SITE" LINK */}
+        <Link 
+          href="/" 
+          target="_blank" 
+          className="flex items-center justify-center gap-2 w-full text-sm py-2 bg-white/10 rounded-lg hover:bg-white/20 transition-colors"
+        >
+          <ExternalLink className="w-4 h-4" />
+          View Public Site
+        </Link>
       </div>
 
       {/* Navigation */}
@@ -70,7 +83,7 @@ export default function Sidebar() {
 
       {/* Logout */}
       <div className="p-4 border-t border-brand-700">
-        <form action={logout}>
+        <form action={logoutUser}>
           <button className="flex items-center gap-3 px-4 py-3 w-full text-brand-300 hover:bg-brand-700/50 hover:text-white rounded-lg transition-all duration-200">
             <LogOut className="w-5 h-5" />
             <span className="font-medium">Logout</span>
