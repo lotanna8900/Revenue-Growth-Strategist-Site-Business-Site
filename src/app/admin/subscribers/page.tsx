@@ -1,9 +1,9 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { deleteSubscriber, unsubscribeSubscriber } from './actions';
 import { FileWarning, Trash2, UserX } from 'lucide-react';
-import ExportButton from '@/components/admin/ExportButton'; 
+import ExportButton from '@/components/admin/ExportButton';
+import CopyLinkButton from '@/components/admin/CopyLinkButton';
 
-// Helper function to format the date
 function formatDate(isoString: string | null) {
   if (!isoString) return 'N/A';
   return new Date(isoString).toLocaleDateString('en-US', {
@@ -27,6 +27,9 @@ export default async function SubscribersPage() {
   
   const subscriberList = subscribers || [];
   const subscribedCount = subscriberList.filter(s => s.status === 'subscribed').length;
+  
+  // Define the newsletter subscription URL
+  const newsletterUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/newsletter`;
 
   return (
     <div className="p-8">
@@ -39,12 +42,13 @@ export default async function SubscribersPage() {
         </div>
         
         {/* 2. ADD THE BUTTON AND WRAP CARDS */}
-        <div className="flex gap-4 items-center">
+        <div className="flex flex-wrap gap-4 items-center">
           <div className="glass-card p-4 text-center">
             <p className="text-brand-600 font-medium">Total Active</p>
             <p className="text-3xl font-bold text-brand-900">{subscribedCount}</p>
           </div>
           <ExportButton subscribers={subscriberList} />
+          <CopyLinkButton urlToCopy={newsletterUrl} />
         </div>
         
       </div>

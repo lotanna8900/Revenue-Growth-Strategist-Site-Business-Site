@@ -179,3 +179,70 @@ export async function verifyPayment(reference: string) {
     return { success: false, error: (error as Error).message };
   }
 }
+
+export async function submitReview(
+  previousState: any,
+  formData: FormData,
+): Promise<{ error?: string; message?: string }> {
+  const supabase = await createServerSupabaseClient();
+
+  // 1. Get User and Form Data
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return { error: 'You must be logged in to leave a review.' };
+  }
+
+  const productId = formData.get('productId') as string;
+  const rating = parseInt(formData.get('rating') as string);
+  const content = formData.get('content') as string;
+
+  if (!productId || !rating) {
+    return { error: 'Product ID and rating are required.' };
+  }
+
+  try {
+    const { data: orderItem, error: orderError } = await supabase
+      .from('order_items')
+      .select('id, orders ( user_id, status )')
+      .eq('product_id', productId)
+      .eq('orders.user_id', user.id)
+      .eq('orders.status', 'completed')
+      .limit(1)
+      .single(); // Use .single() to get one record or null
+
+    if (orderError && orderError.code !== 'PGRST116') {
+      throw orderError;
+    }
+
+    const isVerified = !!orderItem; 
+
+    // 3. Save the Review
+    const { error: reviewError } = await supabase.from('reviews').insert({
+      product_id: productId,
+      user_id: user.id,
+      rating: rating,
+      content: content,
+      is_verified_purchase: isVerified,
+      status: isVerified ? 'approved' : 'pending',
+    });
+
+    if (reviewError) {
+      if (reviewError.code === '23505') {
+        return { error: 'You have already submitted a review for this product.' };
+      }
+      throw reviewError;
+    }
+
+    revalidatePath(`/store/${formData.get('productSlug')}`);
+
+    if (isVerified) {
+      return { message: 'Thank you! Your review has been published.' };
+    } else {
+      return { message: 'Thank you! Your review is awaiting moderation.' };
+    }
+
+  } catch (error) {
+    console.error('Error submitting review:', error);
+    return { error: 'Failed to submit review. Please try again.' };
+  }
+}

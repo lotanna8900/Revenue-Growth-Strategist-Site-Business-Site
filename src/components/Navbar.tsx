@@ -1,8 +1,6 @@
 import Link from 'next/link';
-import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { User, LogOut } from 'lucide-react';
 import { logoutUser } from '@/app/(public)/auth/actions';
-import MobileMenu from './MobileMenu'; 
 import SignInLink from './SignInLink';
 
 const links = [
@@ -12,16 +10,12 @@ const links = [
   { href: '/store', label: 'Shop' },
 ];
 
-export default async function Navbar() {
-  const supabase = await createServerSupabaseClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
+export default function Navbar({ isLoggedIn }: { isLoggedIn: boolean }) {
   return (
     <header className="sticky top-0 z-40 w-full bg-white/80 shadow-sm backdrop-blur-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
           
-          {/* Left: Logo */}
           <Link href="/" className="text-2xl font-bold text-brand-800">
             Success Driven Amaka
           </Link>
@@ -41,7 +35,7 @@ export default async function Navbar() {
 
           {/* Right: Auth Links (Desktop) */}
           <div className="hidden md:flex items-center gap-4">
-            {user ? (
+            {isLoggedIn ? (
               <>
                 <Link
                   href="/account"
@@ -66,9 +60,6 @@ export default async function Navbar() {
               </SignInLink>
             )}
           </div>
-
-          {/* Mobile Menu Button */}
-          <MobileMenu isLoggedIn={!!user} />
           
         </div>
       </div>

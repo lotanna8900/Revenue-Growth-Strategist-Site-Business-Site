@@ -186,46 +186,67 @@ export default function FileManagerPage() {
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
             {files.length > 0 ? (
-              files.map((file) => (
-                <div
-                  key={file.id}
-                  className="rounded-lg border border-brand-200 overflow-hidden shadow-sm"
-                >
-                  <div className="h-32 bg-brand-50 flex items-center justify-center">
-                    <File className="w-12 h-12 text-brand-400" />
-                  </div>
-                  <div className="p-3 bg-white">
-                    <p
-                      className="text-sm font-medium text-brand-800 truncate"
-                      title={file.name}
-                    >
-                      {file.name}
-                    </p>
-                    {/* --- BUTTONS */}
-                    <div className="flex items-center justify-between mt-2">
-                      <button
-                        onClick={() => copyToClipboard(`uploads/${file.name}`)}
-                        className="flex items-center gap-1 text-xs text-brand-600 hover:text-brand-900"
+              files.map((file) => {
+                // 1. Check if the file is an image
+                const isImage = file.metadata.mimetype?.startsWith('image/');
+                let imageUrl: string | null = null;
+                
+                // 2. Get the public URL
+                if (isImage) {
+                  imageUrl = supabase.storage
+                    .from(bucketName)
+                    .getPublicUrl(`uploads/${file.name}`).data.publicUrl;
+                }
+
+                return (
+                  <div
+                    key={file.id}
+                    className="rounded-lg border border-brand-200 overflow-hidden shadow-sm"
+                  >
+                    <div className="h-32 bg-brand-50 flex items-center justify-center overflow-hidden">
+                      {isImage && imageUrl ? (
+                        <img
+                          src={imageUrl}
+                          alt={file.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <File className="w-12 h-12 text-brand-400" />
+                      )}
+                    </div>
+
+                    <div className="p-3 bg-white">
+                      <p
+                        className="text-sm font-medium text-brand-800 truncate"
+                        title={file.name}
                       >
-                        <Copy className="w-3 h-3" />
-                        URL
-                      </button>
-                      
-                      {/* DELETE FORM  */}
-                      <form action={enhancedDeleteAction}>
-                        <input type="hidden" name="file_path" value={`uploads/${file.name}`} />
+                        {file.name}
+                      </p>
+                      {/* Buttons (No Change) */}
+                      <div className="flex items-center justify-between mt-2">
                         <button
-                          type="submit"
-                          className="flex items-center gap-1 text-xs text-red-500 hover:text-red-700"
+                          onClick={() => copyToClipboard(`uploads/${file.name}`)}
+                          className="flex items-center gap-1 text-xs text-brand-600 hover:text-brand-900"
                         >
-                          <Trash2 className="w-3 h-3" />
-                          Delete
+                          <Copy className="w-3 h-3" />
+                          URL
                         </button>
-                      </form>
+                        
+                        <form action={enhancedDeleteAction}>
+                          <input type="hidden" name="file_path" value={`uploads/${file.name}`} />
+                          <button
+                            type="submit"
+                            className="flex items-center gap-1 text-xs text-red-500 hover:text-red-700"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                            Delete
+                          </button>
+                        </form>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))
+                );
+              })
             ) : (
               <p className="col-span-full text-center text-brand-600">
                 No files uploaded yet.

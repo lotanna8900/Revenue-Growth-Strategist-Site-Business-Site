@@ -110,6 +110,12 @@ function AuthForm() {
             <label htmlFor="login-password" className="block text-sm font-medium text-brand-700 mb-1">
               Password
             </label>
+            <Link
+                href="/forgot-password"
+                className="text-sm font-medium text-brand-600 hover:text-brand-900"
+              >
+                Forgot password?
+            </Link>
             <input
               type="password"
               id="login-password"
@@ -158,6 +164,18 @@ function AuthForm() {
               type="password"
               id="signup-password"
               name="password"
+              required
+              className="w-full px-4 py-3 rounded-lg border border-brand-200 focus:outline-none focus:ring-2 focus:ring-brand-600"
+            />
+          </div>
+          <div>
+            <label htmlFor="confirmPassword" className="block text-sm font-medium text-brand-700 mb-1">
+              Confirm Password
+            </label>
+            <input
+              type="password"
+              id="confirmPassword"
+              name="confirmPassword"
               required
               className="w-full px-4 py-3 rounded-lg border border-brand-200 focus:outline-none focus:ring-2 focus:ring-brand-600"
             />

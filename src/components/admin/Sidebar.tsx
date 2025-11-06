@@ -2,20 +2,11 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { logoutUser } from '@/app/(public)/auth/actions'; // Ensure this path is correct
+import { logoutUser } from '@/app/(public)/auth/actions';
 import {
-  LayoutDashboard,
-  FileText,
-  ShoppingBag,
-  FolderOpen,
-  BarChart3,
-  MessageSquare,
-  Settings,
-  LogOut,
-  Sparkles,
-  Trophy,
-  Users,
-  ExternalLink, 
+  LayoutDashboard, FileText, ShoppingBag, FolderOpen, BarChart3,
+  MessageSquare, Settings, LogOut, Sparkles, Trophy, Users,
+  ExternalLink, X,
 } from 'lucide-react';
 
 const menuItems = [
@@ -30,28 +21,36 @@ const menuItems = [
   { icon: Settings, label: 'Settings', href: '/admin/settings' },
 ];
 
-export default function Sidebar() {
+type SidebarProps = {
+  isOpen: boolean;
+  setIsOpen: (isOpen: boolean) => void;
+};
+
+export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
   const pathname = usePathname();
 
-  return (
-    <aside className="w-64 min-h-screen bg-gradient-to-b from-brand-800 to-brand-900 text-white flex flex-col">
-      {/* Logo */}
+  const sidebarContent = (
+    <>
+      {/* Logo & Close Button (Mobile) */}
       <div className="p-6 border-b border-brand-700">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 bg-gradient-to-br from-accent-gold to-accent-rose rounded-lg flex items-center justify-center">
-            <Sparkles className="w-6 h-6" />
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-accent-gold to-accent-rose rounded-lg flex items-center justify-center">
+              <Sparkles className="w-6 h-6" />
+            </div>
+            <div>
+              <h1 className="font-bold text-lg">Admin</h1>
+              <p className="text-xs text-brand-300">Dashboard</p>
+            </div>
           </div>
-          <div>
-            <h1 className="font-bold text-lg">Admin</h1>
-            <p className="text-xs text-brand-300">Dashboard</p>
-          </div>
+          <button onClick={() => setIsOpen(false)} className="md:hidden p-1">
+            <X className="w-6 h-6" />
+          </button>
         </div>
-        
-        {/* 2. "VIEW SITE" LINK */}
         <Link 
           href="/" 
           target="_blank" 
-          className="flex items-center justify-center gap-2 w-full text-sm py-2 bg-white/10 rounded-lg hover:bg-white/20 transition-colors"
+          className="flex items-center justify-center gap-2 w-full text-sm py-2 mt-4 bg-white/10 rounded-lg hover:bg-white/20 transition-colors"
         >
           <ExternalLink className="w-4 h-4" />
           View Public Site
@@ -63,11 +62,11 @@ export default function Sidebar() {
         {menuItems.map((item) => {
           const Icon = item.icon;
           const isActive = pathname === item.href;
-          
           return (
             <Link
               key={item.href}
               href={item.href}
+              onClick={() => setIsOpen(false)} 
               className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
                 isActive
                   ? 'bg-brand-700 text-white shadow-lg'
@@ -90,6 +89,24 @@ export default function Sidebar() {
           </button>
         </form>
       </div>
-    </aside>
+    </>
+  );
+
+  return (
+    <>
+      {/* Mobile Sidebar (Overlay) */}
+      <div
+        className={`fixed inset-0 z-50 flex flex-col bg-gradient-to-b from-brand-800 to-brand-900 text-white transition-transform duration-300 md:hidden
+          ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+        `}
+      >
+        {sidebarContent}
+      </div>
+      
+      {/* Desktop Sidebar (Static) */}
+      <aside className="w-64 min-h-screen bg-gradient-to-b from-brand-800 to-brand-900 text-white flex-col hidden md:flex">
+        {sidebarContent}
+      </aside>
+    </>
   );
 }

@@ -60,7 +60,7 @@ export async function signupUser(
     return { message: 'Password must be at least 6 characters long.', isError: true };
   }
 
-  // 3. THE FIX: Add the 'options.data' block back in
+
   const { error } = await supabase.auth.signUp({
     email,
     password,
@@ -88,4 +88,56 @@ export async function logoutUser() {
   await supabase.auth.signOut();
   revalidatePath('/', 'layout');
   redirect('/');
+}
+
+export async function requestPasswordReset(
+  previousState: FormState | null,
+  formData: FormData,
+): Promise<FormState> {
+  const supabase = await createServerSupabaseClient();
+  const email = formData.get('email') as string;
+
+  if (!email) {
+    return { message: 'Email is required.', isError: true };
+  }
+
+  // Get the redirect path
+  const redirectTo = `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/reset-password`;
+
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: redirectTo,
+  });
+
+  if (error) {
+    console.error('Error sending reset email:', error);
+    return { message: 'Failed to send reset email. Please try again.', isError: true };
+  }
+
+  return { message: 'Password reset link has been sent to your email.', isError: false };
+}
+
+export async function resetPassword(
+  previousState: FormState | null,
+  formData: FormData,
+): Promise<FormState> {
+  const supabase = await createServerSupabaseClient();
+  const password = formData.get('password') as string;
+  const confirmPassword = formData.get('confirmPassword') as string;
+
+  if (!password || !confirmPassword) {
+    return { message: 'Both password fields are required.', isError: true };
+  }
+
+  if (password !== confirmPassword) {
+    return { message: 'Passwords do not match.', isError: true };
+  }
+
+  const { error } = await supabase.auth.updateUser({ password });
+
+  if (error) {
+    console.error('Error resetting password:', error);
+    return { message: `Error updating password: ${error.message}`, isError: true };
+  }
+
+  return { message: 'Your password has been reset successfully.', isError: false };
 }

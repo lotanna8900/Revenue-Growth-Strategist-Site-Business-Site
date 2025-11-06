@@ -134,6 +134,9 @@ export default function NewPostPage() {
               Browse
             </button>
           </div>
+          <p className="text-sm text-brand-500 mt-2">
+            For best results, use a wide (16:9) image.
+          </p>
           {featuredImage && (
             <img src={featuredImage} alt="Preview" className="mt-4 rounded-lg object-cover w-full h-48" />
           )}

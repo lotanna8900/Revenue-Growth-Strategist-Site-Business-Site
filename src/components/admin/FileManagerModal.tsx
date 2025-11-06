@@ -87,25 +87,47 @@ export default function FileManagerModal({ isOpen, onClose, onFileSelect }: Prop
             </div>
           ) : (
             <div className="grid grid-cols-3 md:grid-cols-5 lg:grid-cols-6 gap-4">
-              {files.map((file) => (
-                <button
-                  key={file.id}
-                  onClick={() => handleFileClick(file)}
-                  className="rounded-lg border border-brand-200 overflow-hidden shadow-sm group hover:border-brand-600 hover:shadow-lg transition-all"
-                >
-                  <div className="h-32 bg-brand-50 flex items-center justify-center">
-                    <File className="w-12 h-12 text-brand-400" />
-                  </div>
-                  <div className="p-2 bg-white">
-                    <p
-                      className="text-xs font-medium text-brand-800 truncate group-hover:text-brand-600"
-                      title={file.name}
-                    >
-                      {file.name}
-                    </p>
-                  </div>
-                </button>
-              ))}
+              {files.map((file) => {
+                // 1. Check if the file is an image
+                const isImage = file.metadata.mimetype?.startsWith('image/');
+                let imageUrl: string | null = null;
+                
+                if (isImage) {
+                  imageUrl = supabase.storage
+                    .from(bucketName)
+                    .getPublicUrl(`uploads/${file.name}`).data.publicUrl;
+                }
+                
+                return (
+                  <button
+                    key={file.id}
+                    onClick={() => handleFileClick(file)}
+                    className="rounded-lg border border-brand-200 overflow-hidden shadow-sm group hover:border-brand-600 hover:shadow-lg transition-all"
+                  >
+                    {/* Conditionally render <img> or <File> */}
+                    <div className="h-32 bg-brand-50 flex items-center justify-center overflow-hidden">
+                      {isImage && imageUrl ? (
+                        <img
+                          src={imageUrl}
+                          alt={file.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <File className="w-12 h-12 text-brand-400" />
+                      )}
+                    </div>
+                    
+                    <div className="p-2 bg-white">
+                      <p
+                        className="text-xs font-medium text-brand-800 truncate group-hover:text-brand-600"
+                        title={file.name}
+                      >
+                        {file.name}
+                      </p>
+                    </div>
+                  </button>
+                );
+              })}
             </div>
           )}
         </div>
