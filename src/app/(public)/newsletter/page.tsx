@@ -57,7 +57,11 @@ export default function NewsletterPage() {
               Join My Newsletter
             </h1>
             <p className="text-brand-600 text-lg">
-              Get revenue strategies and career insights sent straight to your inbox.
+              Get exclusive insights on revenue growth, scaling and brand building delivered to your inbox every Monday.
+            </p>
+
+            <p className="text-brand-600 text-lg">
+              Let's build something extraordinary.
             </p>
           </div>
 

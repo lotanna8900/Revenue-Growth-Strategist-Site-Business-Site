@@ -138,7 +138,15 @@ export default async function AboutPage() {
 
               {/* Description */}
               <p className="text-xl md:text-2xl mb-10 text-brand-100 leading-relaxed max-w-xl">
-                I build brands that generate millions and guide professionals who want to achieve the same.
+                My name is Chiamaka Success Iwuala and <b>I'm a Revenue Growth Strategist, Brand Expert and Career Clarity Coach.</b> I didn't stumble into this work - I built my way here, intentionally.
+              </p>
+
+              <p className="text-xl md:text-2xl mb-10 text-brand-100 leading-relaxed max-w-xl">
+                I was supposed to be a medical doctor. That was the plan. The expectation. The " <b>right path.</b>" But somewhere between the pressure and the prestige, I realized something: this wasn't <b>MY</b> path.
+              </p>
+
+              <p>
+                Keep scrolling to read my story.
               </p>
 
               {/* Social Links - Enhanced */}
@@ -269,7 +277,7 @@ export default async function AboutPage() {
               My Story
             </h2>
             <p className="text-xl text-brand-100">
-              How I went from aspiring professional to revenue growth strategist
+              How I went from aspiring medical doctor to revenue growth strategist
             </p>
           </div>
 
@@ -417,10 +425,10 @@ export default async function AboutPage() {
           <div className="relative z-10">
             <Sparkles className="w-16 h-16 mx-auto mb-6 text-brand-600" />
             <h2 className="text-4xl md:text-5xl font-bold text-brand-900 mb-4">
-              Let's Build Your Revenue Engine
+              Ready to Build Your Success Intentionally?
             </h2>
             <p className="text-xl text-brand-600 mb-10 max-w-2xl mx-auto">
-              Ready to transform your business or career? Let's create something extraordinary together.
+              Whether you're an entrepreneur ready to scale or a professional seeking career clarity, I'd love to work with you.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link 

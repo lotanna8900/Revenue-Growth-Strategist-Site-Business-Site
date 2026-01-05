@@ -75,6 +75,7 @@ export default function EditAchievementPage({ params }: { params: Promise<{ id: 
   const [description, setDescription] = useState('');
   const [status, setStatus] = useState('completed');
   const [featured, setFeatured] = useState(false);
+  const [imageUrl, setImageUrl] = useState('');
 
   // Fetch the achievement data on component mount
   useEffect(() => {
@@ -90,7 +91,6 @@ export default function EditAchievementPage({ params }: { params: Promise<{ id: 
       
       if (data) {
         setAchievementData(data as Achievement); 
-        // Set the controlled component state
         setTitle(data.title);
         setSlug(data.slug);
         setClientName(data.client_name || '');
@@ -99,6 +99,12 @@ export default function EditAchievementPage({ params }: { params: Promise<{ id: 
         setDescription(data.description || '');
         setStatus(data.status);
         setFeatured(data.featured);
+
+        const imgs = data.images as string[] | null;
+        if (imgs && imgs.length > 0) {
+            setImageUrl(imgs[0]);
+        }
+
       } else {
         console.error('Error fetching achievement:', error); 
       }
@@ -107,6 +113,7 @@ export default function EditAchievementPage({ params }: { params: Promise<{ id: 
 
     fetchAchievement(); 
   }, [id]);
+  
 
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newTitle = e.target.value;
@@ -176,6 +183,27 @@ export default function EditAchievementPage({ params }: { params: Promise<{ id: 
                 className="w-full px-4 py-3 rounded-lg border border-brand-200 bg-brand-50 text-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-600"
               />
             </div>
+          </div>
+        </div>
+
+        {/* IMAGE UPLOAD SECTION */}
+        <div className="glass-card p-6">
+          <div className="space-y-4">
+            <label htmlFor="image_url" className="block text-lg font-semibold text-brand-800 mb-2">
+              Achievement Image
+            </label>
+            <p className="text-sm text-brand-600 mb-2">
+              Paste the link from your File Manager here.
+            </p>
+            <input
+              id="image_url"
+              name="image_url"
+              type="url"
+              value={imageUrl}
+              onChange={(e) => setImageUrl(e.target.value)}
+              className="w-full px-4 py-3 rounded-lg border border-brand-200 focus:outline-none focus:ring-2 focus:ring-brand-600"
+              placeholder="https://..."
+            />
           </div>
         </div>
         

@@ -5,6 +5,8 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 
 function getAchievementData(formData: FormData) {
+  const imageUrl = formData.get('image_url') as string;
+
   return {
     title: formData.get('title') as string,
     slug: formData.get('slug') as string,
@@ -13,7 +15,8 @@ function getAchievementData(formData: FormData) {
     industry: formData.get('industry') as string,
     year: formData.get('year') ? parseInt(formData.get('year') as string) : null,
     status: formData.get('status') as string,
-    featured: formData.get('featured') === 'on', // Checkbox value
+    featured: formData.get('featured') === 'on',
+    images: imageUrl ? [imageUrl] : null, 
   };
 }
 

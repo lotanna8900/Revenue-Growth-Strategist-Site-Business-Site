@@ -65,7 +65,7 @@ export async function createCheckoutSession(
         email: userEmail,
         amount: amountInKobo,
         currency: 'NGN',
-        callback_url: `http://localhost:3000/store/payment/success`,
+        callback_url: `http://successdrivenamaka.com.ng/store/payment/success`,
         metadata: {
           product_id: productId,
           user_id: user.id,

@@ -42,7 +42,6 @@ function SubmitButton() {
 
 // Main page component
 export default function NewAchievementPage() { 
-  // Use 'useActionState' and pass the action directly
   const [state, formAction] = useActionState(createAchievement, null); 
   
   // Client state for controlled inputs
@@ -105,6 +104,25 @@ export default function NewAchievementPage() {
                 placeholder="e.g., client-revenue-grew-300-percent"
               />
             </div>
+          </div>
+        </div>
+
+        {/* IMAGE UPLOAD SECTION */}
+        <div className="glass-card p-6">
+          <div className="space-y-4">
+            <label htmlFor="image_url" className="block text-lg font-semibold text-brand-800 mb-2">
+              Achievement Image
+            </label>
+            <p className="text-sm text-brand-600 mb-2">
+              Paste the link from your File Manager here.
+            </p>
+            <input
+              id="image_url"
+              name="image_url"
+              type="url"
+              className="w-full px-4 py-3 rounded-lg border border-brand-200 focus:outline-none focus:ring-2 focus:ring-brand-600"
+              placeholder="https://your-supabase-url/storage/v1/object/public/..."
+            />
           </div>
         </div>
         
