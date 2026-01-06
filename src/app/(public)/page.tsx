@@ -463,7 +463,7 @@ export default async function HomePage() {
             Join the Success Community
           </h2>
           <p className="text-xl text-brand-100 mb-8">
-            Get weekly insights on revenue growth, career strategy, and business development.
+            Get exclusive strategies on revenue growth, scaling and building premium brands - delivered every monday to your inbox.
           </p>
           <Link 
             href="/newsletter" 

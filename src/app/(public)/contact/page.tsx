@@ -25,7 +25,7 @@ export default async function ContactPage() {
             Get In Touch
           </h1>
           <p className="text-xl md:text-2xl text-brand-600 max-w-2xl mx-auto">
-            Book a 35-minute Revenue Acceleration Strategy Call.
+            Book a 35-minute Revenue Acceleration Strategy Call, where we'll identify the bottleneck preventing your business from scaling to 8-figures and outline actionable steps to overcome it.
           </p>
         </div>
 

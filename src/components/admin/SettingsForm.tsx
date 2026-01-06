@@ -5,6 +5,7 @@ import { useFormStatus } from 'react-dom';
 import { updateSettings } from '@/app/admin/settings/actions';
 import { Settings, AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
 import FileManagerModal from './FileManagerModal';
+import Editor from '@/components/admin/Editor';
 
 type SettingsProps = {
   settings: Record<string, string>;
@@ -124,6 +125,11 @@ export default function SettingsForm({ settings }: SettingsProps) {
     setActiveModalKey(null);
   };
 
+  // Handler for the Rich Text Editor
+  const handleEditorChange = (html: string) => {
+    setFormData(prev => ({ ...prev, aboutStory: html }));
+  };
+
   return (
     <>
       <form action={formAction} className="max-w-4xl space-y-6">
@@ -172,13 +178,24 @@ export default function SettingsForm({ settings }: SettingsProps) {
             onBrowse={() => handleBrowseClick('aboutImageUrl')}
             placeholder="https://..._your_image.jpg"
           />
-          <SettingTextarea
-            label="About Page Story"
-            name="aboutStory"
-            value={formData.aboutStory || ''}
-            onChange={handleChange}
-            placeholder="Tell your story..."
-          />
+          {/* Rich Text Editor for Story */}
+          <div>
+            <label className="block text-lg font-semibold text-brand-800 mb-2">
+               About Page Story
+            </label>
+            <div className="prose-container border border-brand-200 rounded-lg overflow-hidden">
+               <Editor 
+                 content={formData.aboutStory || ''} 
+                 onChange={handleEditorChange} 
+               />
+            </div>
+            {/* ⚠️ Hidden input is required to send data to the server action */}
+            <input 
+              type="hidden" 
+              name="aboutStory" 
+              value={formData.aboutStory || ''} 
+            />
+          </div>
         </div>
         
         {/* Social Links */}

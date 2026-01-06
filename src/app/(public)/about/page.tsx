@@ -19,6 +19,7 @@ import {
 import { TikTokIcon } from '@/components/icons/TikTokIcon';
 import Link from 'next/link';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
+import RichTextDisplay from '@/components/RichTextDisplay';
 
 // Helper function to fetch all data in parallel
 async function getAboutPageData() {
@@ -50,17 +51,17 @@ const expertiseList = [
   {
     icon: TrendingUp,
     title: "Revenue Growth Strategy",
-    description: "Building scalable revenue engines that drive sustainable business growth"
+    description: "Stop undercharging and build revenue systems that scale to 7-figures - without burnout"
   },
   {
     icon: Sparkles,
     title: "Brand Strategy",
-    description: "Creating powerful brand identities that resonate and convert"
+    description: "Build a brand so premium, your price don't need explaining"
   },
   {
     icon: Target,
     title: "Career Clarity Coaching",
-    description: "Guiding professionals to discover and achieve their true potential"
+    description: "You don't need a popular career to succeed - you need the RIGHT one. Built on your innate skills."
   },
 ];
 
@@ -76,23 +77,23 @@ const impactStats = [
 const coreValues = [
   {
     icon: Heart,
-    title: 'Authenticity',
-    description: 'Being genuine in every interaction, whether in boardrooms or conversations.'
+    title: 'Never let complacency ruin your work',
+    description: 'Especially when you\'re already getting recognized - that\'s when it\'s most dangerous to get comfortable.'
   },
   {
     icon: Zap,
-    title: 'Excellence',
-    description: 'Pursuing the highest standards in strategy, execution, and results.'
+    title: 'Self-respect is non-negotiable',
+    description: 'Address others how you want to be addressed. Set the standard.'
   },
   {
     icon: Users,
-    title: 'Impact',
-    description: 'Creating meaningful change that transforms businesses and careers.'
+    title: 'Be prepared',
+    description: 'That opportunity you\'ve been waiting for? It\'s coming. Make sure you\'re ready when it knocks'
   },
   {
     icon: BarChart3,
-    title: 'Results-Driven',
-    description: 'Focused on measurable outcomes and sustainable growth.'
+    title: 'Master the art of scarcity',
+    description: 'Restricting availability and access enhances your value. I\'m a very scarce person, and it\'s one of the best decisions I\'ve made for my brand and my business'
   }
 ];
 
@@ -281,16 +282,9 @@ export default async function AboutPage() {
             </p>
           </div>
 
+          {/* 👇 FIXED: Removed the nested duplicate div here */}
           <div className="glass-card p-8 md:p-12 bg-white/95 backdrop-blur-xl">
-            <div
-              className="prose prose-lg max-w-none
-                prose-headings:text-brand-900 prose-headings:font-bold
-                prose-p:text-brand-700 prose-p:leading-relaxed prose-p:mb-6
-                prose-strong:text-brand-900 prose-strong:font-bold
-                prose-a:text-brand-600 prose-a:no-underline hover:prose-a:text-brand-800
-              "
-              dangerouslySetInnerHTML={{ __html: aboutStory.replace(/\n/g, '<br />') }}
-            />
+             <RichTextDisplay content={aboutStory} />
           </div>
         </div>
       </section>
@@ -303,7 +297,7 @@ export default async function AboutPage() {
             <span className="text-sm font-semibold text-brand-700">PRINCIPLES</span>
           </div>
           <h2 className="text-4xl md:text-5xl font-bold text-brand-900 mb-4">
-            What I Stand For
+            Here's what I live by
           </h2>
           <p className="text-xl text-brand-600 max-w-2xl mx-auto">
             The values that guide every decision and relationship
@@ -428,14 +422,14 @@ export default async function AboutPage() {
               Ready to Build Your Success Intentionally?
             </h2>
             <p className="text-xl text-brand-600 mb-10 max-w-2xl mx-auto">
-              Whether you're an entrepreneur ready to scale or a professional seeking career clarity, I'd love to work with you.
+              Whether you're an enterprise ready to scale or a professional seeking career clarity, I'd love to work with you.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link 
                 href="/contact" 
                 className="btn-primary text-lg inline-flex items-center gap-2 group"
               >
-                Schedule a Consultation
+                Book a Strategy Call
                 <Calendar className="w-5 h-5 group-hover:scale-110 transition-transform" />
               </Link>
               <Link 

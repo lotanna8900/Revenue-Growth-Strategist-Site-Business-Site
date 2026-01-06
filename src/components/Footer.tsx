@@ -54,7 +54,7 @@ export default async function Footer() {
           {/* Column 3: Newsletter */}
           <div>
             <h3 className="text-xl font-semibold text-white mb-4">Join the Newsletter</h3>
-            <p className="text-brand-300 mb-4">Get strategies and insights sent straight to your inbox.</p>
+            <p className="text-brand-300 mb-4">Get exclusive strategies and insights sent straight to your inbox every monday.</p>
             <Link href="/newsletter" className="btn-primary">Subscribe Now</Link>
           </div>
         </div>
