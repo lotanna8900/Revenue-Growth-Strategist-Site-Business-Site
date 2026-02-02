@@ -1,4 +1,4 @@
-# Success Driven Amaka
+# Success Driven Amaka — Business & Strategy Platform
 
 A full-stack personal brand and business platform built for **Amaka**, a *Revenue Growth Strategist*.  
 This platform brings together her personal brand, blog, achievements, and online shop — all managed seamlessly through a custom-built admin dashboard.
@@ -18,39 +18,38 @@ Developed with a modern, type-safe Next.js stack and powered by Supabase, the si
 - **About Page:** Fully editable from admin “Site Settings” - bio, photos, and social links are all dynamic.
 - **Achievements (Portfolio):** Dedicated page highlighting completed projects, courses, and key milestones.
 - **Blog:** Full blog system with nested comments (supports guests and registered users).
-- **E-Commerce Store (Success Shop):** Sell digital courses or physical products with a Paystack-powered checkout flow.
-- **Newsletter:** A dedicated landing page for newsletter sign-ups and management.
-- **User Account Page:** Registered users can view order history and manage their profiles.
+- **Success Shop (Digital & Physical):** Specialized e-commerce engine for selling digital courses, masterclasses, and physical products.
+- **Automated Digital Fulfillment:** Instant digital access granting (via `user_access` logic) and automated email delivery (via Resend) immediately after Paystack payment verification.
 - **Product Reviews:** Includes “Verified Purchase” logic for authentic reviews.
+- **User Account Page:** Registered users can view order history and manage their profiles.
 
 ---
 
 ### 🔒 Admin Dashboard
-- **Secure Routes:** All `/admin` pages are protected and redirect unauthorized users.
+- **Secure Routes:** All `/admin` pages are protected via Supabase RLS and Middleware.
 - **Content Management (Full CRUD):**
-  - Blog Manager (Create, Edit, Delete)
-  - Achievements Manager (Create, Edit, Delete)
-  - Product Manager (Create, Edit, Delete)
+  - **Blog Manager:** Create, Edit, Delete posts with rich content.
+  - **Achievements Manager:** Showcasing success stories and milestones.
+  - **Product Manager:** Manage Digital vs Physical items, inventory, and secure Access URLs.
 - **File Manager:** Integrated Supabase Storage with image previews and modal-based file selection.
 - **Comment Moderation:** Approve or delete user comments directly from the dashboard.
-- **Subscriber Management:** View all newsletter subscribers and export CSVs for Substack/Beehiiv integration.
-- **Site Settings:** Update home/about content, photos, bios, and social links - all instantly reflected on the live site.
-- **Analytics Page:** Basic admin-only analytics overview for traffic and engagement metrics.
-- *(Upcoming: Review moderation, extended analytics features)*
+- **Subscriber Management:** View all newsletter subscribers and export CSVs for MailerLite/external CRM integration.
+- **Site Settings:** Update home/about content, photos, bios, and social links instantly.
+- **Analytics Page:** Admin-only analytics overview for traffic and engagement metrics.
 
 ---
 
 ## 🖼️ Screenshots
 
-<img width="2510" height="1416" alt="07 11 2025_01 02 59_REC" src="https://github.com/user-attachments/assets/cc39870b-6b6a-4caf-8efa-a66eaab28795" />
+<img width="2510" height="1416" alt="Home Page" src="https://github.com/user-attachments/assets/cc39870b-6b6a-4caf-8efa-a66eaab28795" />
 
-<img width="2522" height="1410" alt="07 11 2025_01 13 33_REC" src="https://github.com/user-attachments/assets/4afc36c0-772e-4abe-8119-05f94f1568c6" />
+<img width="2522" height="1410" alt="Admin Dashboard" src="https://github.com/user-attachments/assets/4afc36c0-772e-4abe-8119-05f94f1568c6" />
 
-<img width="2514" height="1422" alt="07 11 2025_01 04 46_REC" src="https://github.com/user-attachments/assets/dad46c74-8b4d-4f4f-a4ee-2a8db3ace302" />
+<img width="2514" height="1422" alt="Blog System" src="https://github.com/user-attachments/assets/dad46c74-8b4d-4f4f-a4ee-2a8db3ace302" />
 
-<img width="2520" height="1416" alt="07 11 2025_01 04 08_REC" src="https://github.com/user-attachments/assets/59067495-215c-430e-bdc1-ac34e330b10b" />
+<img width="2520" height="1416" alt="Store Front" src="https://github.com/user-attachments/assets/59067495-215c-430e-bdc1-ac34e330b10b" />
 
-<img width="2514" height="1428" alt="07 11 2025_01 07 33_REC" src="https://github.com/user-attachments/assets/efb039a1-e4be-4cd0-85c8-0f43e3fc6d02" />
+<img width="2514" height="1428" alt="Checkout Flow" src="https://github.com/user-attachments/assets/efb039a1-e4be-4cd0-85c8-0f43e3fc6d02" />
 
 ---
 
@@ -63,43 +62,27 @@ Developed with a modern, type-safe Next.js stack and powered by Supabase, the si
 | **Backend / Database** | Supabase (PostgreSQL, Auth, RLS, Storage) |
 | **Styling** | Tailwind CSS |
 | **Animations** | Framer Motion |
-| **Payments** | Paystack |
-| **Email / Forms** | Resend |
+| **Payments** | Paystack (NGN Integration) |
+| **Email / Delivery** | Resend |
 | **Deployment** | Vercel |
 
 ---
 
 ## ⚙️ System Overview
 
-### 1. Content Management System (CMS)
-All blog posts, products, achievements, and homepage content are fully manageable from the admin dashboard.  
-Dynamic updates are reflected instantly across all pages without redeployment.
+### 1. Digital Product Architecture
+The system utilizes a custom `user_access` table to track digital ownership. Upon successful payment verification through the Paystack API, the backend triggers an automated fulfillment sequence: granting DB permissions and dispatching a secure access link via Resend.
 
-### 2. Authentication & Role-Based Access
-Supabase handles authentication, with JWT-based role checks.  
-Admins have full access to content dashboards, while regular users can manage profiles and purchases.
 
-### 3. E-Commerce Flow
-Paystack handles secure payments for digital and physical items.  
-After checkout, the user’s purchase history updates dynamically in their account dashboard.
 
-### 4. File & Media Handling
-A custom file manager allows admins to upload and select images directly inside form modals, powered by Supabase Storage and React state management.
+### 2. CMS & Mobile Management
+The admin panel is optimized for mobile-first management, allowing the client to update course links, blog posts, and site metadata directly from a mobile device without code changes.
 
----
-
-## 🔮 Future Enhancements
-- Enhanced site analytics for sales and content performance.
-- Review moderation panel for the admin dashboard.
-- OAuth (Google, LinkedIn) for easier sign-in.
-- Multi-admin support and activity logs.
+### 3. Authentication & Security
+Supabase handles authentication with JWT-based role checks. Row Level Security (RLS) ensures that user purchase history and admin content remain strictly protected.
 
 ---
 
 ## 📜 License
 This project is proprietary and developed for **Success Driven Amaka**.  
-All rights reserved © 2025 — Developed by **Lotanna Wisdom Iwuala**.
-
----
-
-
+All rights reserved © 2026 — Developed by **Lotanna Wisdom Iwuala**.

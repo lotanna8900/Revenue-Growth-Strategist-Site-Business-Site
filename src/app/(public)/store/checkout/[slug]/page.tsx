@@ -14,7 +14,7 @@ async function getProduct(slug: string) {
   const supabase = await createServerSupabaseClient();
   const { data: product, error } = await supabase
     .from('products')
-    .select('id, name, slug, price, sale_price, images, stock')
+    .select('id, name, slug, price, sale_price, images, stock, is_digital')
     .eq('slug', slug)
     .eq('status', 'active')
     .single();

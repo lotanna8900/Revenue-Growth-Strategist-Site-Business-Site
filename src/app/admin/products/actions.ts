@@ -29,7 +29,10 @@ function getProductData(formData: FormData) {
     sizes: stringToArray(formData.get('sizes') as string),
     colors: stringToArray(formData.get('colors') as string),
     images: stringToArray(formData.get('images') as string),
-    featured: formData.get('featured') === 'on', // 1. ADDED THIS
+    featured: formData.get('featured') === 'on', 
+    type: formData.get('type') as string || 'physical',
+    access_url: formData.get('access_url') as string || null,
+    is_digital: formData.get('is_digital') === 'on',
   };
 }
 

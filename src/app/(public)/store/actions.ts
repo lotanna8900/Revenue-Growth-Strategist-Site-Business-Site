@@ -1,8 +1,10 @@
 'use server';
 
 import { createServerSupabaseClient } from '@/lib/supabase/server';
-import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
+import { Resend } from 'resend';
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 type CheckoutResponse = {
   error?: string;
@@ -28,7 +30,7 @@ export async function createCheckoutSession(
   const city = formData.get('city') as string;
   const state = formData.get('state') as string;
 
-  if (!productId || !fullName || !phone || !address || !city || !state) {
+  if (!productId || !fullName || !phone) {
     return { error: 'Please fill out all required fields.' };
   }
 
@@ -39,7 +41,7 @@ export async function createCheckoutSession(
   }
   const userEmail = user.email!;
 
-  // 3. Get the product details from our database
+  // 3. Get the product details
   const { data: product, error: productError } = await supabase
     .from('products')
     .select('name, price, sale_price')
@@ -65,13 +67,13 @@ export async function createCheckoutSession(
         email: userEmail,
         amount: amountInKobo,
         currency: 'NGN',
-        callback_url: `http://successdrivenamaka.com.ng/store/payment/success`,
+        callback_url: `${process.env.NEXT_PUBLIC_SITE_URL}/store/payment/success`,
         metadata: {
           product_id: productId,
           user_id: user.id,
           customer_name: fullName,
           customer_phone: phone,
-          shipping_address: `${address}, ${city}, ${state}`,
+          shipping_address: `${address || 'Digital'}, ${city || 'Digital'}, ${state || 'Digital'}`,
         },
       }),
     });
@@ -82,7 +84,6 @@ export async function createCheckoutSession(
       return { error: `Payment gateway error: ${data.message}` };
     }
 
-    // 5. Return the payment URL
     return { authorization_url: data.data.authorization_url };
 
   } catch (error) {
@@ -115,29 +116,24 @@ export async function verifyPayment(reference: string) {
     }
     
     const paymentData = data.data;
-
-    // 2. Get metadata to find out what was purchased
     const { product_id, user_id } = paymentData.metadata;
-    const amountPaid = paymentData.amount / 100; // Convert from Kobo to Naira
+    const amountPaid = paymentData.amount / 100;
 
-    // 3. Get the product price from the DB to cross-check
+    // 2. Cross-check product and get Digital Info
     const { data: product } = await supabase
       .from('products')
-      .select('price, sale_price')
+      .select('name, price, sale_price, is_digital, access_url, type')
       .eq('id', product_id)
       .single();
     
-    if (!product) {
-      throw new Error('Product not found in our database.');
-    }
+    if (!product) throw new Error('Product not found.');
     
-    // Cross-check price (allowing for small discrepancies if needed)
     const priceToCharge = product.sale_price || product.price;
     if (amountPaid < priceToCharge) {
       throw new Error('Amount paid does not match product price.');
     }
 
-    // 4. Create the new order in my database
+    // 3. Create the order
     const { data: newOrder, error: orderError } = await supabase
       .from('orders')
       .insert({
@@ -149,29 +145,43 @@ export async function verifyPayment(reference: string) {
       .select('id')
       .single();
 
-    if (orderError) {
-      throw new Error(`Failed to save order: ${orderError.message}`);
-    }
+    if (orderError) throw new Error(`Order save failed: ${orderError.message}`);
 
-    // 5. Create the order item
-    const { error: itemError } = await supabase
-      .from('order_items')
-      .insert({
-        order_id: newOrder.id,
+    // 4. Create the order item
+    await supabase.from('order_items').insert({
+      order_id: newOrder.id,
+      product_id: product_id,
+      quantity: 1,
+      price: amountPaid,
+    });
+
+    // 5. DIGITAL FULFILLMENT LOGIC
+    if (product.is_digital && product.access_url) {
+      // Grant Access in user_access table
+      await supabase.from('user_access').insert({
+        user_id: user_id,
         product_id: product_id,
-        quantity: 1, // Only support 1 item for now
-        price: amountPaid,
       });
 
-    if (itemError) {
-      throw new Error(`Failed to save order item: ${itemError.message}`);
+      // Send the access email
+      const { data: userData } = await supabase.auth.admin.getUserById(user_id);
+      const customerEmail = userData.user?.email;
+
+      if (customerEmail) {
+        try {
+          await resend.emails.send({
+            from: 'Success Driven Amaka <hello@yourdomain.com>',
+            to: customerEmail,
+            subject: `Access Granted: ${product.name}`,
+            text: `Hi! Thank you for your purchase. You can access your ${product.type} here: ${product.access_url}\n\nTo your success,\nAmaka`,
+          });
+        } catch (resendErr) {
+          console.error('Email delivery failed:', resendErr);
+        }
+      }
     }
     
-    // 6. (Optional) Decrement stock
-    // I'll add this later. For now, just record the sale.
-    
-    // 7. Revalidate paths and return success
-    revalidatePath('/admin/analytics'); // Update analytics
+    revalidatePath('/admin/analytics');
     return { success: true, orderId: newOrder.id };
 
   } catch (error) {
@@ -185,38 +195,27 @@ export async function submitReview(
   formData: FormData,
 ): Promise<{ error?: string; message?: string }> {
   const supabase = await createServerSupabaseClient();
-
-  // 1. Get User and Form Data
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    return { error: 'You must be logged in to leave a review.' };
-  }
+  if (!user) return { error: 'You must be logged in to leave a review.' };
 
   const productId = formData.get('productId') as string;
   const rating = parseInt(formData.get('rating') as string);
   const content = formData.get('content') as string;
 
-  if (!productId || !rating) {
-    return { error: 'Product ID and rating are required.' };
-  }
+  if (!productId || !rating) return { error: 'Product ID and rating are required.' };
 
   try {
-    const { data: orderItem, error: orderError } = await supabase
+    const { data: orderItem } = await supabase
       .from('order_items')
       .select('id, orders ( user_id, status )')
       .eq('product_id', productId)
       .eq('orders.user_id', user.id)
       .eq('orders.status', 'completed')
       .limit(1)
-      .single(); // Use .single() to get one record or null
-
-    if (orderError && orderError.code !== 'PGRST116') {
-      throw orderError;
-    }
+      .single();
 
     const isVerified = !!orderItem; 
 
-    // 3. Save the Review
     const { error: reviewError } = await supabase.from('reviews').insert({
       product_id: productId,
       user_id: user.id,
@@ -227,22 +226,17 @@ export async function submitReview(
     });
 
     if (reviewError) {
-      if (reviewError.code === '23505') {
-        return { error: 'You have already submitted a review for this product.' };
-      }
+      if (reviewError.code === '23505') return { error: 'Review already submitted.' };
       throw reviewError;
     }
 
     revalidatePath(`/store/${formData.get('productSlug')}`);
-
-    if (isVerified) {
-      return { message: 'Thank you! Your review has been published.' };
-    } else {
-      return { message: 'Thank you! Your review is awaiting moderation.' };
-    }
+    return { 
+      message: isVerified ? 'Review published!' : 'Review awaiting moderation.' 
+    };
 
   } catch (error) {
-    console.error('Error submitting review:', error);
-    return { error: 'Failed to submit review. Please try again.' };
+    console.error('Review error:', error);
+    return { error: 'Failed to submit review.' };
   }
 }

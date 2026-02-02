@@ -7,7 +7,6 @@ import { createClient } from '@/lib/supabase/client';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import FileManagerModal from '@/components/admin/FileManagerModal';
 
-// Simple type for the product data
 type Product = {
   id: string;
   name: string;
@@ -19,10 +18,11 @@ type Product = {
   sku: string | null;
   category: string | null;
   status: string;
-  sizes: string[];
-  colors: string[];
   images: string[];
-  featured: boolean; // 1. ADDED
+  featured: boolean;
+  type: 'physical' | 'course' | 'video' | 'download';
+  access_url: string | null;
+  is_digital: boolean;
 };
 
 type FormState = { error: string } | null;
@@ -59,16 +59,13 @@ function SubmitButton() {
   );
 }
 
-// Main page component
 export default function EditProductPage({ params }: { params: Promise<{ id: string }> }) {
-  // 1. Unwrap the 'params' promise
   const clientParams = use(params);
   const { id } = clientParams;
   
-  // 2. Use 'useActionState' for form handling
   const [state, formAction] = useActionState(updateProduct, null);
   
-  // 3. State for all form fields
+  // Existing States
   const [isLoading, setIsLoading] = useState(true);
   const [name, setName] = useState('');
   const [slug, setSlug] = useState('');
@@ -82,12 +79,15 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
   const [sizes, setSizes] = useState('');
   const [colors, setColors] = useState('');
   const [images, setImages] = useState('');
-  const [featured, setFeatured] = useState(false); // 4. ADDED
+  const [featured, setFeatured] = useState(false);
 
-  // State for file manager modal
+  // Digital Transition States
+  const [type, setType] = useState<'physical' | 'course' | 'video' | 'download'>('physical');
+  const [isDigital, setIsDigital] = useState(false);
+  const [accessUrl, setAccessUrl] = useState('');
+
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Fetch the product data on component mount
   useEffect(() => {
     if (!id) return; 
 
@@ -95,12 +95,11 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
     const fetchProduct = async () => {
       const { data, error } = await supabase
         .from('products')
-        .select('*') // '*' will now include 'featured'
+        .select('*')
         .eq('id', id)
         .single();
       
       if (data) {
-        // Set all the controlled component states
         setName(data.name);
         setSlug(data.slug);
         setDescription(data.description || '');
@@ -113,7 +112,12 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
         setSizes(data.sizes?.join(', ') || '');
         setColors(data.colors?.join(', ') || '');
         setImages(data.images?.join(', ') || '');
-        setFeatured(data.featured || false); // 5. ADDED
+        setFeatured(data.featured || false);
+        
+        // NEW: Pull digital fields from DB
+        setType(data.type || 'physical');
+        setIsDigital(data.is_digital || false);
+        setAccessUrl(data.access_url || '');
       } else {
         console.error('Error fetching product:', error);
       }
@@ -129,9 +133,13 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
     setSlug(slugify(newName));
   };
 
-  // handleFileSelect function
+  const handleTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedType = e.target.value as any;
+    setType(selectedType);
+    setIsDigital(selectedType !== 'physical');
+  };
+
   const handleFileSelect = (url: string) => {
-    // Appends the new URL, adding a comma if needed
     setImages((prev) => (prev ? `${prev}, ${url}` : url));
   };
   
@@ -151,6 +159,8 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
 
       <form action={formAction} className="max-w-4xl space-y-6">
         <input type="hidden" name="id" value={id} />
+        {/* Hidden field to send is_digital boolean */}
+        <input type="hidden" name="is_digital" value={isDigital ? 'on' : 'off'} />
 
         {state && state.error && (
             <div className="flex items-center gap-2 rounded-lg bg-red-100 p-3 text-sm text-red-700">
@@ -162,7 +172,6 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
         {/* Main Details Card */}
         <div className="glass-card p-6">
           <div className="space-y-4">
-            {/* Name */}
             <div>
               <label htmlFor="name" className="block text-lg font-semibold text-brand-800 mb-2">
                 Product Name
@@ -178,7 +187,6 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
               />
             </div>
 
-            {/* Slug */}
             <div>
               <label htmlFor="slug" className="block text-lg font-semibold text-brand-800 mb-2">
                 URL Slug
@@ -214,7 +222,6 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
         {/* Pricing & Inventory Card */}
         <div className="glass-card p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Price (NGN) */}
             <div>
               <label htmlFor="price" className="block text-md font-semibold text-brand-800 mb-2">
                 Price (NGN)
@@ -231,7 +238,6 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
               />
             </div>
             
-            {/* Sale Price (NGN) */}
             <div>
               <label htmlFor="sale_price" className="block text-md font-semibold text-brand-800 mb-2">
                 Sale Price (NGN) - Optional
@@ -247,25 +253,25 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
               />
             </div>
             
-            {/* Stock */}
-            <div>
-              <label htmlFor="stock" className="block text-md font-semibold text-brand-800 mb-2">
-                Stock Quantity
-              </label>
-              <input
-                id="stock"
-                name="stock"
-                type="number"
-                value={stock}
-                onChange={(e) => setStock(e.target.value)}
-                className="w-full px-4 py-3 rounded-lg border border-brand-200 focus:outline-none focus:ring-2 focus:ring-brand-600"
-              />
-            </div>
+            {!isDigital && (
+              <div>
+                <label htmlFor="stock" className="block text-md font-semibold text-brand-800 mb-2">
+                  Stock Quantity
+                </label>
+                <input
+                  id="stock"
+                  name="stock"
+                  type="number"
+                  value={stock}
+                  onChange={(e) => setStock(e.target.value)}
+                  className="w-full px-4 py-3 rounded-lg border border-brand-200 focus:outline-none focus:ring-2 focus:ring-brand-600"
+                />
+              </div>
+            )}
 
-            {/* SKU */}
             <div>
               <label htmlFor="sku" className="block text-md font-semibold text-brand-800 mb-2">
-                SKU (Stock Keeping Unit)
+                SKU / Reference ID
               </label>
               <input
                 id="sku"
@@ -279,25 +285,27 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
           </div>
         </div>
 
-        {/* Organization Card (UPDATED) */}
+        {/* Organization & Digital Access Card */}
         <div className="glass-card p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Category */}
             <div>
-              <label htmlFor="category" className="block text-md font-semibold text-brand-800 mb-2">
-                Category
+              <label htmlFor="type" className="block text-md font-semibold text-brand-800 mb-2">
+                Product Type
               </label>
-              <input
-                id="category"
-                name="category"
-                type="text"
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                className="w-full px-4 py-3 rounded-lg border border-brand-200 focus:outline-none focus:ring-2 focus:ring-brand-600"
-              />
+              <select
+                id="type"
+                name="type"
+                value={type}
+                onChange={handleTypeChange}
+                className="w-full px-4 py-3 rounded-lg border border-brand-200 bg-white focus:outline-none focus:ring-2 focus:ring-brand-600"
+              >
+                <option value="physical">Physical Product</option>
+                <option value="course">Online Course</option>
+                <option value="video">Paid Masterclass Video</option>
+                <option value="download">Digital Download (PDF)</option>
+              </select>
             </div>
             
-            {/* Status */}
             <div>
               <label htmlFor="status" className="block text-md font-semibold text-brand-800 mb-2">
                 Status
@@ -316,7 +324,27 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
             </div>
           </div>
 
-          {/* 6. FEATURED CHECKBOX */}
+          {isDigital && (
+            <div className="mt-6 pt-6 border-t border-brand-200">
+              <label htmlFor="access_url" className="block text-md font-semibold text-brand-900 mb-2">
+                Access URL (The Course/Video Link)
+              </label>
+              <input
+                id="access_url"
+                name="access_url"
+                type="url"
+                required
+                value={accessUrl}
+                onChange={(e) => setAccessUrl(e.target.value)}
+                className="w-full px-4 py-3 rounded-lg border border-brand-600 bg-brand-50 focus:outline-none focus:ring-2 focus:ring-brand-600"
+                placeholder="https://vimeo.com/your-link"
+              />
+              <p className="text-sm text-brand-500 mt-2 italic">
+                This link is delivered to the customer automatically after payment.
+              </p>
+            </div>
+          )}
+
           <div className="flex items-center pt-6 mt-6 border-t border-brand-200">
             <input
               id="featured"
@@ -332,82 +360,70 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
           </div>
         </div>
         
-        {/* Variants Card */}
-        <div className="glass-card p-6">
-          <div className="space-y-4">
-            {/* Sizes */}
-            <div>
-              <label htmlFor="sizes" className="block text-md font-semibold text-brand-800 mb-2">
-                Sizes
-              </label>
-              <input
-                id="sizes"
-                name="sizes"
-                type="text"
-                value={sizes}
-                onChange={(e) => setSizes(e.target.value)}
-                className="w-full px-4 py-3 rounded-lg border border-brand-200 focus:outline-none focus:ring-2 focus:ring-brand-600"
-              />
-              <p className="text-sm text-brand-500 mt-2">
-                Enter sizes separated by a comma.
-              </p>
-            </div>
-            
-            {/* Colors */}
-            <div>
-              <label htmlFor="colors" className="block text-md font-semibold text-brand-800 mb-2">
-                Colors
-              </label>
-              <input
-                id="colors"
-                name="colors"
-                type="text"
-                value={colors}
-                onChange={(e) => setColors(e.target.value)}
-                className="w-full px-4 py-3 rounded-lg border border-brand-200 focus:outline-none focus:ring-2 focus:ring-brand-600"
-              />
-              <p className="text-sm text-brand-500 mt-2">
-                Enter colors separated by a comma.
-              </p>
-            </div>
-
-            {/* Images */}
-            <div>
-              <label htmlFor="images" className="block text-md font-semibold text-brand-800 mb-2">
-                Image URLs
-              </label>
-              <div className="flex gap-2">
+        {/* Variants Card - Hidden for digital */}
+        {!isDigital && (
+          <div className="glass-card p-6">
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="sizes" className="block text-md font-semibold text-brand-800 mb-2">
+                  Sizes
+                </label>
                 <input
-                  id="images"
-                  name="images"
+                  id="sizes"
+                  name="sizes"
                   type="text"
-                  value={images}
-                  onChange={(e) => setImages(e.target.value)}
+                  value={sizes}
+                  onChange={(e) => setSizes(e.target.value)}
                   className="w-full px-4 py-3 rounded-lg border border-brand-200 focus:outline-none focus:ring-2 focus:ring-brand-600"
-                  placeholder="Click 'Browse' or paste URLs..."
                 />
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(true)}
-                  className="btn-secondary flex-shrink-0"
-                >
-                  Browse
-                </button>
               </div>
-              <p className="text-sm text-brand-500 mt-2">
-                Add URLs separated by a comma.
-              </p>
+              
+              <div>
+                <label htmlFor="colors" className="block text-md font-semibold text-brand-800 mb-2">
+                  Colors
+                </label>
+                <input
+                  id="colors"
+                  name="colors"
+                  type="text"
+                  value={colors}
+                  onChange={(e) => setColors(e.target.value)}
+                  className="w-full px-4 py-3 rounded-lg border border-brand-200 focus:outline-none focus:ring-2 focus:ring-brand-600"
+                />
+              </div>
             </div>
+          </div>
+        )}
+
+        {/* Images Card */}
+        <div className="glass-card p-6">
+          <label htmlFor="images" className="block text-md font-semibold text-brand-800 mb-2">
+            Product Images
+          </label>
+          <div className="flex gap-2">
+            <input
+              id="images"
+              name="images"
+              type="text"
+              value={images}
+              onChange={(e) => setImages(e.target.value)}
+              className="w-full px-4 py-3 rounded-lg border border-brand-200 focus:outline-none focus:ring-2 focus:ring-brand-600"
+            />
+            <button
+              type="button"
+              onClick={() => setIsModalOpen(true)}
+              className="btn-secondary flex-shrink-0"
+            >
+              Browse
+            </button>
           </div>
         </div>
 
-        {/* Submit Button */}
         <div className="flex justify-end">
           <SubmitButton />
         </div>
       </form>
 
-      {/* 5. MODAL COMPONENT */}
       <FileManagerModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}

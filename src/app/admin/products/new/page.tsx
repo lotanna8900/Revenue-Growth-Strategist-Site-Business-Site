@@ -48,6 +48,11 @@ export default function NewProductPage() {
   const [name, setName] = useState('');
   const [slug, setSlug] = useState('');
   const [featured, setFeatured] = useState(false);
+  
+  // Digital/Course specific states
+  const [type, setType] = useState<'physical' | 'course' | 'video' | 'download'>('physical');
+  const [isDigital, setIsDigital] = useState(false);
+  const [accessUrl, setAccessUrl] = useState('');
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [images, setImages] = useState('');
@@ -58,10 +63,14 @@ export default function NewProductPage() {
     setSlug(slugify(newName));
   };
 
+  const handleTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedType = e.target.value as any;
+    setType(selectedType);
+    setIsDigital(selectedType !== 'physical');
+  };
+
   const handleFileSelect = (url: string) => {
-    const newImages = images
-      ? `${images}, ${url}`
-      : url;
+    const newImages = images ? `${images}, ${url}` : url;
     setImages(newImages);
     setIsModalOpen(false);
   };
@@ -73,6 +82,9 @@ export default function NewProductPage() {
       </h1>
 
       <form action={formAction} className="max-w-4xl space-y-6">
+        {/* Hidden field for digital boolean */}
+        <input type="hidden" name="is_digital" value={isDigital ? 'on' : 'off'} />
+
         {state?.error && (
           <div className="flex items-center gap-2 rounded-lg bg-red-100 p-3 text-sm text-red-700">
             <AlertCircle className="w-5 h-5" />
@@ -83,7 +95,6 @@ export default function NewProductPage() {
         {/* Main Details Card */}
         <div className="glass-card p-6">
           <div className="space-y-4">
-            {/* Name */}
             <div>
               <label htmlFor="name" className="block text-lg font-semibold text-brand-800 mb-2">
                 Product Name
@@ -96,11 +107,10 @@ export default function NewProductPage() {
                 value={name}
                 onChange={handleNameChange}
                 className="w-full px-4 py-3 rounded-lg border border-brand-200 text-lg focus:outline-none focus:ring-2 focus:ring-brand-600"
-                placeholder="e.g., Krystal Silk Blouse"
+                placeholder="e.g., Revenue Growth Masterclass"
               />
             </div>
 
-            {/* Slug */}
             <div>
               <label htmlFor="slug" className="block text-lg font-semibold text-brand-800 mb-2">
                 URL Slug
@@ -113,7 +123,7 @@ export default function NewProductPage() {
                 value={slug}
                 onChange={(e) => setSlug(e.target.value)}
                 className="w-full px-4 py-3 rounded-lg border border-brand-200 bg-brand-50 text-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-600"
-                placeholder="e.g., krystal-silk-blouse"
+                placeholder="e.g., revenue-growth-masterclass"
               />
             </div>
           </div>
@@ -129,14 +139,13 @@ export default function NewProductPage() {
             name="description"
             rows={8}
             className="w-full px-4 py-3 rounded-lg border border-brand-200 focus:outline-none focus:ring-2 focus:ring-brand-600"
-            placeholder="Describe the product, material, fit, etc..."
+            placeholder="Describe the value proposition of this course or product..."
           ></textarea>
         </div>
 
         {/* Pricing & Inventory Card */}
         <div className="glass-card p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Price (NGN) */}
             <div>
               <label htmlFor="price" className="block text-md font-semibold text-brand-800 mb-2">
                 Price (NGN)
@@ -148,11 +157,10 @@ export default function NewProductPage() {
                 step="0.01"
                 required
                 className="w-full px-4 py-3 rounded-lg border border-brand-200 focus:outline-none focus:ring-2 focus:ring-brand-600"
-                placeholder="e.g., 15000.00"
+                placeholder="e.g., 50000.00"
               />
             </div>
             
-            {/* Sale Price (NGN) */}
             <div>
               <label htmlFor="sale_price" className="block text-md font-semibold text-brand-800 mb-2">
                 Sale Price (NGN) - Optional
@@ -163,58 +171,62 @@ export default function NewProductPage() {
                 type="number"
                 step="0.01"
                 className="w-full px-4 py-3 rounded-lg border border-brand-200 focus:outline-none focus:ring-2 focus:ring-brand-600"
-                placeholder="e.g., 12500.00"
+                placeholder="e.g., 35000.00"
               />
             </div>
             
-            {/* Stock */}
-            <div>
-              <label htmlFor="stock" className="block text-md font-semibold text-brand-800 mb-2">
-                Stock Quantity
-              </label>
-              <input
-                id="stock"
-                name="stock"
-                type="number"
-                className="w-full px-4 py-3 rounded-lg border border-brand-200 focus:outline-none focus:ring-2 focus:ring-brand-600"
-                placeholder="e.g., 50"
-              />
-            </div>
+            {/* Show stock only for physical products */}
+            {!isDigital && (
+              <div>
+                <label htmlFor="stock" className="block text-md font-semibold text-brand-800 mb-2">
+                  Stock Quantity
+                </label>
+                <input
+                  id="stock"
+                  name="stock"
+                  type="number"
+                  className="w-full px-4 py-3 rounded-lg border border-brand-200 focus:outline-none focus:ring-2 focus:ring-brand-600"
+                  placeholder="e.g., 50"
+                />
+              </div>
+            )}
 
-            {/* SKU */}
             <div>
               <label htmlFor="sku" className="block text-md font-semibold text-brand-800 mb-2">
-                SKU (Stock Keeping Unit)
+                SKU / Reference ID
               </label>
               <input
                 id="sku"
                 name="sku"
                 type="text"
                 className="w-full px-4 py-3 rounded-lg border border-brand-200 focus:outline-none focus:ring-2 focus:ring-brand-600"
-                placeholder="e.g., KFK-BLS-001"
+                placeholder="e.g., COURSE-001"
               />
             </div>
           </div>
         </div>
 
-        {/* Organization Card (UPDATED) */}
+        {/* Organization Card */}
         <div className="glass-card p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Category */}
             <div>
-              <label htmlFor="category" className="block text-md font-semibold text-brand-800 mb-2">
-                Category
+              <label htmlFor="type" className="block text-md font-semibold text-brand-800 mb-2">
+                Product Type
               </label>
-              <input
-                id="category"
-                name="category"
-                type="text"
-                className="w-full px-4 py-3 rounded-lg border border-brand-200 focus:outline-none focus:ring-2 focus:ring-brand-600"
-                placeholder="e.g., Tops, Shoes, Dresses"
-              />
+              <select
+                id="type"
+                name="type"
+                value={type}
+                onChange={handleTypeChange}
+                className="w-full px-4 py-3 rounded-lg border border-brand-200 bg-white focus:outline-none focus:ring-2 focus:ring-brand-600"
+              >
+                <option value="physical">Physical Product</option>
+                <option value="course">Online Course</option>
+                <option value="video">Paid Masterclass Video</option>
+                <option value="download">Digital Download (PDF)</option>
+              </select>
             </div>
             
-            {/* Status */}
             <div>
               <label htmlFor="status" className="block text-md font-semibold text-brand-800 mb-2">
                 Status
@@ -227,12 +239,32 @@ export default function NewProductPage() {
               >
                 <option value="active">Active</option>
                 <option value="inactive">Inactive (Draft)</option>
-                <option value="out_of_stock">Out of Stock</option>
               </select>
             </div>
           </div>
+
+          {/* Digital Access URL - Only show for digital products */}
+          {isDigital && (
+            <div className="mt-6 pt-6 border-t border-brand-200">
+              <label htmlFor="access_url" className="block text-md font-semibold text-brand-800 mb-2 text-brand-900">
+                Access URL (Course/Video Link)
+              </label>
+              <input
+                id="access_url"
+                name="access_url"
+                type="url"
+                required
+                value={accessUrl}
+                onChange={(e) => setAccessUrl(e.target.value)}
+                className="w-full px-4 py-3 rounded-lg border border-brand-600 bg-brand-50 focus:outline-none focus:ring-2 focus:ring-brand-600"
+                placeholder="https://vimeo.com/your-private-link"
+              />
+              <p className="text-sm text-brand-500 mt-2 italic">
+                This link will be sent to the customer via email once payment is confirmed.
+              </p>
+            </div>
+          )}
           
-          {/* 2. FEATURED CHECKBOX */}
           <div className="flex items-center pt-6 mt-6 border-t border-brand-200">
             <input
               id="featured"
@@ -248,80 +280,69 @@ export default function NewProductPage() {
           </div>
         </div>
         
-        {/* Variants Card */}
-        <div className="glass-card p-6">
-          <div className="space-y-4">
-            {/* Sizes */}
-            <div>
-              <label htmlFor="sizes" className="block text-md font-semibold text-brand-800 mb-2">
-                Sizes
-              </label>
-              <input
-                id="sizes"
-                name="sizes"
-                type="text"
-                className="w-full px-4 py-3 rounded-lg border border-brand-200 focus:outline-none focus:ring-2 focus:ring-brand-600"
-                placeholder="e.g., S, M, L, XL"
-              />
-              <p className="text-sm text-brand-500 mt-2">
-                Enter sizes separated by a comma.
-              </p>
-            </div>
-            
-            {/* Colors */}
-            <div>
-              <label htmlFor="colors" className="block text-md font-semibold text-brand-800 mb-2">
-                Colors
-              </label>
-              <input
-                id="colors"
-                name="colors"
-                type="text"
-                className="w-full px-4 py-3 rounded-lg border border-brand-200 focus:outline-none focus:ring-2 focus:ring-brand-600"
-                placeholder="e.g., Red, Blue, Black"
-              />
-              <p className="text-sm text-brand-500 mt-2">
-                Enter colors separated by a comma.
-              </p>
-            </div>
-
-            {/* Images */}
-            <div>
-              <label htmlFor="images" className="block text-md font-semibold text-brand-800 mb-2">
-                Image URLs
-              </label>
-              <div className="flex gap-2">
+        {/* Variants Card - Hide for digital products */}
+        {!isDigital && (
+          <div className="glass-card p-6">
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="sizes" className="block text-md font-semibold text-brand-800 mb-2">
+                  Sizes
+                </label>
                 <input
-                  id="images"
-                  name="images"
+                  id="sizes"
+                  name="sizes"
                   type="text"
-                  value={images}
-                  onChange={(e) => setImages(e.target.value)}
                   className="w-full px-4 py-3 rounded-lg border border-brand-200 focus:outline-none focus:ring-2 focus:ring-brand-600"
-                  placeholder="Click 'Browse' or paste URLs..."
+                  placeholder="e.g., S, M, L, XL"
                 />
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(true)}
-                  className="btn-secondary flex-shrink-0"
-                >
-                  Browse
-                </button>
               </div>
-              <p className="text-sm text-brand-500 mt-2">
-                Add URLs separated by a comma.
-              </p>
+              
+              <div>
+                <label htmlFor="colors" className="block text-md font-semibold text-brand-800 mb-2">
+                  Colors
+                </label>
+                <input
+                  id="colors"
+                  name="colors"
+                  type="text"
+                  className="w-full px-4 py-3 rounded-lg border border-brand-200 focus:outline-none focus:ring-2 focus:ring-brand-600"
+                  placeholder="e.g., Gold, Brown, White"
+                />
+              </div>
             </div>
+          </div>
+        )}
+
+        {/* Images Card */}
+        <div className="glass-card p-6">
+          <label htmlFor="images" className="block text-md font-semibold text-brand-800 mb-2">
+            Product Images
+          </label>
+          <div className="flex gap-2">
+            <input
+              id="images"
+              name="images"
+              type="text"
+              value={images}
+              onChange={(e) => setImages(e.target.value)}
+              className="w-full px-4 py-3 rounded-lg border border-brand-200 focus:outline-none focus:ring-2 focus:ring-brand-600"
+              placeholder="Paste URLs or click Browse..."
+            />
+            <button
+              type="button"
+              onClick={() => setIsModalOpen(true)}
+              className="btn-secondary flex-shrink-0"
+            >
+              Browse
+            </button>
           </div>
         </div>
 
-        {/* Submit Button */}
         <div className="flex justify-end">
           <SubmitButton />
         </div>
       </form>
 
-      {/* File manager modal */}
       <FileManagerModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}

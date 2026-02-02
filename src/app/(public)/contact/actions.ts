@@ -31,7 +31,7 @@ export async function submitContactForm(
 
   try {
     await resend.emails.send({
-      from: 'chiamaka@successdrivenamaka.com.ng', // This can be a "no-reply" address
+      from: 'chiamaka@successdrivenamaka.com.ng', 
       to: emailTo,
       subject: `New Contact Form Submission: ${subject}`,
       replyTo: email,
